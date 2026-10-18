@@ -1,0 +1,322 @@
+@import "tailwindcss";
+
+@theme {
+  /* Fonts */
+  --font-sora: "Sora", sans-serif;
+  --font-dm-sans: "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Brand Accents (Restrained) */
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-900: #1e1b4b;
+
+  --color-accent-500: #06b6d4;
+
+  /* Status Tokens */
+  --color-success-600: #16a34a;
+  --color-success-500: #22c55e;
+  --color-error-600: #dc2626;
+  --color-error-500: #ef4444;
+  --color-warning-600: #d97706;
+  --color-warning-500: #f59e0b;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+}
+
+:root {
+  color-scheme: dark;
+  background-color: #0a0a0a;
+  color: #ededed;
+  font-family: var(--font-dm-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Semantic Design Tokens */
+  --bg-app: #0a0a0a;
+  --bg-sidebar: #0d0d0d;
+  --bg-card: #121212;
+  --bg-card-elevated: #181818;
+  --border-subtle: #222222;
+  --border-elevated: #2c2c2c;
+  --text-primary: #ededed;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+}
+
+html, body, #root {
+  background-color: #0a0a0a !important;
+  color: #ededed !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sora);
+  color: #f4f4f5 !important;
+}
+
+.metric {
+  font-family: var(--font-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #0a0a0a !important;
+  color: #ededed !important;
+  overflow-x: hidden;
+}
+
+/* ==========================================================================
+   PURE DARK MODE THEME OVERRIDES
+   Guarantees high-contrast text, sleek dark boxes, and dark backgrounds
+   across every single page, form, and modal.
+   ========================================================================== */
+
+/* Typography Utilities */
+.text-white {
+  color: #ffffff !important;
+}
+
+/* Input Fields & Textareas */
+input, select, textarea {
+  color: #ededed !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #52525b !important;
+}
+
+/* Surface Background Dark Overrides */
+.bg-neutral-50 {
+  background-color: #141414 !important;
+}
+
+.bg-neutral-50\/80,
+.bg-neutral-50\/50,
+.bg-neutral-50\/30 {
+  background-color: rgba(20, 20, 20, 0.8) !important;
+}
+
+.bg-neutral-100 {
+  background-color: #181818 !important;
+}
+
+.bg-neutral-100\/80,
+.bg-neutral-100\/60 {
+  background-color: rgba(24, 24, 24, 0.8) !important;
+}
+
+.bg-neutral-200 {
+  background-color: #222222 !important;
+}
+
+/* Pure White Utility for Brand Logo Container */
+.bg-pure-white {
+  background-color: #ffffff !important;
+}
+
+/* Borders in Dark Theme */
+.border-neutral-100,
+.border-neutral-200,
+.border-neutral-300 {
+  border-color: #262626 !important;
+}
+
+.border-neutral-200\/80,
+.border-neutral-200\/60 {
+  border-color: rgba(38, 38, 38, 0.8) !important;
+}
+
+.divide-neutral-200 > :not([hidden]) ~ :not([hidden]),
+.divide-neutral-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #262626 !important;
+}
+
+/* Mesh Gradient Dark Background */
+.mesh-gradient {
+  background-color: #0a0a0a !important;
+  background-image: 
+    radial-gradient(at 15% 15%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+    radial-gradient(at 85% 85%, rgba(6, 182, 212, 0.05) 0px, transparent 50%) !important;
+  color: #ededed !important;
+}
+
+/* App shell */
+.app-shell {
+  min-height: 100vh;
+  background-color: #0a0a0a !important;
+}
+
+.app-main {
+  min-height: 100vh;
+  background-color: #0a0a0a !important;
+}
+
+/* Dark Minimal Scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #262626 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #262626;
+  border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Dark surfaces */
+.surface-app {
+  background-color: #0a0a0a !important;
+}
+
+.surface-glass {
+  background: rgba(13, 13, 13, 0.88) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid #1f1f1f !important;
+}
+
+.surface-card {
+  background-color: #121212 !important;
+  border: 1px solid #222222 !important;
+  color: #ededed !important;
+}
+
+.surface-card-elevated {
+  background-color: #161616 !important;
+  border: 1px solid #262626 !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+  color: #ededed !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.surface-card-elevated:hover {
+  border-color: #383838 !important;
+}
+
+.surface-dark {
+  background-color: #141414 !important;
+  border: 1px solid #262626 !important;
+  color: #ededed !important;
+}
+
+.text-gradient-brand {
+  color: #f4f4f5 !important;
+}
+
+.btn-primary-glow {
+  background-color: #4f46e5;
+  color: #ffffff;
+  border: 1px solid #6366f1;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primary-glow:hover {
+  background-color: #4338ca;
+}
+
+.chart-bar {
+  background: #6366f1;
+  border-radius: 3px 3px 0 0;
+}
+
+.chart-bar-muted {
+  background: #262626;
+  border-radius: 3px 3px 0 0;
+}
+
+.glass {
+  background: #141414 !important;
+  border: 1px solid #262626 !important;
+}
+
+.glass-dark {
+  background: #121212 !important;
+  border: 1px solid #222222 !important;
+}
+
+.premium-shadow-hover {
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.premium-shadow-hover:hover {
+  border-color: #333333 !important;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #161616 25%, #222222 50%, #161616 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fade-in 0.15s ease-out;
+}
+
+.fade-in {
+  animation: fade-in 0.15s ease-out;
+}
+
+/* Hide scrollbars cleanly where requested (ChatGPT/Gemini style) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ultra-subtle dark scrollbar for standard containers */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #262626 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #262626;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #3a3a3a;
+}
+
+

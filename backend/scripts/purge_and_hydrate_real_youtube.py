@@ -1,0 +1,147 @@
+"""
+Purge all synthetic 'yt_%' garbage data from PostgreSQL and hydrate canonical concepts
+with 100% genuine YouTube Data API v3 videos using the 3-key pool (max 270 queries/day limit).
+"""
+
+import asyncio
+import logging
+import os
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+# Setup paths so app modules import properly
+backend_dir = Path(__file__).resolve().parent.parent
+services_dir = backend_dir / "services"
+trend_dir = services_dir / "trend"
+
+sys.path.insert(0, str(trend_dir))
+sys.path.insert(0, "/app")
+
+from sqlalchemy import delete, select, text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+
+from app.core.config import settings
+from app.core.youtube_router import youtube_router, MAX_DAILY_SEARCH_QUERIES
+from app.models.concept_models import Concept, ConceptDailySignal, ConceptSignal, TrendConcept, TrendFeedSnapshot
+from app.services.pipeline_engine import PipelineEngine
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("hydrate_real_youtube")
+
+
+async def main() -> None:
+    logger.info("=================================================================")
+    logger.info("STARTING DATABASE GARBAGE PURGE & REAL YOUTUBE HYDRATION")
+    logger.info("=================================================================")
+
+    # 1. Connect to database
+    db_url = os.environ.get("DATABASE_URL") or settings.database_url
+    logger.info("Connecting to database: %s", db_url.split("@")[-1] if "@" in db_url else db_url)
+    engine = create_async_engine(db_url, echo=False)
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    async with async_session() as session:
+        # 2. Purge synthetic dummy data
+        logger.info("--- Step 1: Purging all synthetic 'yt_%%' records from DB ---")
+        
+        del_cds = await session.execute(
+            text("DELETE FROM concept_daily_signals WHERE top_outlier_video_id LIKE 'yt\\_%' ESCAPE '\\' OR population::text LIKE '%\"video_id\": \"yt\\_%' ESCAPE '\\';")
+        )
+        del_cs = await session.execute(
+            text("DELETE FROM concept_signals WHERE payload::text LIKE '%\"video_id\": \"yt\\_%' ESCAPE '\\';")
+        )
+        del_tfs = await session.execute(
+            text("DELETE FROM trend_feed_snapshots WHERE items::text LIKE '%\"video_id\": \"yt\\_%' ESCAPE '\\';")
+        )
+        await session.commit()
+
+        logger.info(
+            "Purged dummy records: %d from concept_daily_signals, %d from concept_signals, %d from trend_feed_snapshots.",
+            del_cds.rowcount,
+            del_cs.rowcount,
+            del_tfs.rowcount,
+        )
+
+        # 3. Fetch active concepts
+        logger.info("--- Step 2: Fetching canonical concepts to hydrate ---")
+        res = await session.execute(select(Concept).where(Concept.active == True).order_by(Concept.name))
+        concepts = list(res.scalars().all())
+        logger.info("Found %d active canonical concepts.", len(concepts))
+
+        today = datetime.now(timezone.utc).date()
+        # Find concepts that already have population_size > 0 today
+        existing_res = await session.execute(
+            select(ConceptDailySignal.concept_id).where(
+                ConceptDailySignal.video_date == today,
+                ConceptDailySignal.population_size > 0,
+            )
+        )
+        already_populated_ids = set(existing_res.scalars().all())
+        logger.info(
+            "Found %d concepts already populated with real YouTube data for %s (conserving quota).",
+            len(already_populated_ids),
+            today,
+        )
+
+        concepts_to_hydrate = [c for c in concepts if c.id not in already_populated_ids]
+        logger.info("Concepts requiring hydration: %d", len(concepts_to_hydrate))
+
+        pipeline = PipelineEngine()
+        successful_hydrations = len(already_populated_ids)
+        total_real_videos = 0
+
+        # Sum existing real videos
+        v_sum_res = await session.execute(
+            select(ConceptDailySignal.population_size).where(
+                ConceptDailySignal.video_date == today,
+                ConceptDailySignal.population_size > 0,
+            )
+        )
+        total_real_videos += sum(v_sum_res.scalars().all() or [0])
+
+        used_searches = await youtube_router.get_daily_searches_used_async()
+        logger.info("--- Step 3: Executing genuine YouTube searches via 3-key pool router ---")
+        logger.info(
+            "Daily Quota Limit: %d search queries/day. Searches already used today: %d. Remaining: %d. Multi-key pool loaded with %d keys.",
+            MAX_DAILY_SEARCH_QUERIES,
+            used_searches,
+            max(0, MAX_DAILY_SEARCH_QUERIES - used_searches),
+            len(youtube_router._keys),
+        )
+
+        for idx, concept in enumerate(concepts_to_hydrate, 1):
+            c_name = concept.name
+            c_cat = concept.category
+            logger.info("[%d/%d] Hydrating concept: '%s' (%s)", idx, len(concepts_to_hydrate), c_name, c_cat)
+            try:
+                run_res = await pipeline.execute_concept_run(session, concept, today)
+                pop_size = run_res.get("population_size", 0)
+                status = run_res.get("status", "unknown")
+
+                if pop_size > 0:
+                    successful_hydrations += 1
+                    total_real_videos += pop_size
+                    logger.info("   -> SUCCESS: %d real YouTube videos verified and saved for '%s'.", pop_size, c_name)
+                else:
+                    logger.warning("   -> Run completed with 0 population (%s) for '%s'.", status, c_name)
+
+                await session.commit()
+            except Exception as e:
+                await session.rollback()
+                logger.error("   -> ERROR during hydration of '%s': %s", c_name, e)
+
+        final_searches = await youtube_router.get_daily_searches_used_async()
+        logger.info("=================================================================")
+        logger.info("HYDRATION COMPLETED SUMMARY:")
+        logger.info("Concepts successfully hydrated with real YouTube videos: %d / %d", successful_hydrations, len(concepts))
+        logger.info("Total real YouTube videos verified & persisted: %d", total_real_videos)
+        logger.info("YouTube search queries used today: %d / %d limit", final_searches, MAX_DAILY_SEARCH_QUERIES)
+        logger.info("=================================================================")
+
+    await engine.dispose()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

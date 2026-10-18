@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+pydantic-settings
+sqlalchemy
+asyncpg
+psycopg2-binary
+alembic
+greenlet
+httpx
+apscheduler
+qdrant-client
+numpy
+sentence-transformers>=2.2.0
+langdetect>=1.0.9
+redis>=5.0.0
+pyyaml>=6.0.1
+
