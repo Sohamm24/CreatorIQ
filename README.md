@@ -26,7 +26,7 @@
 
 Modern creators struggle with content decision-making: picking saturated topics, chasing fleeting spikes too late, or adopting trends misaligned with their audience. **CreatorIQ** solves this with a high-throughput, data-driven workflow:
 
-1. **Automated Multi-Source Harvesting**: Continuously captures raw video and search velocity signals from YouTube Data API v3 and Google Trends (SerpApi).
+1. **Automated Signal Harvesting**: Continuously captures raw video and search velocity signals from the YouTube Data API v3.
 2. **Quality Gating & English Filtering**: Filters noise, spam, and non-English keywords before database persistence.
 3. **Semantic Vector Personalization**: Maps creator niche profiles to trend concepts using 384-dimensional dense vectors (`all-MiniLM-L6-v2`) in Qdrant Vector DB.
 4. **Statistical Breakout Detection**: Identifies viral breakouts using moving average and standard deviation anomaly gates ($\mu + 2\sigma$).
@@ -67,7 +67,6 @@ flowchart TD
 
     subgraph Pipelines ["External Ingestion & Model Inference"]
         Trend --> YouTube["YouTube Data API v3 Pool"]
-        Trend --> SerpApi["SerpApi / Google Trends"]
         Trend --> LLM["Groq / Gemini / OpenAI / OpenRouter"]
         Trend <--> ML
     end
@@ -82,7 +81,7 @@ flowchart TD
 | **API Gateway** | `8000` | [`backend/services/api-gateway`](file:///backend/services/api-gateway) | Single public entry point (`/v1/*`), RS256 JWT validation, header sanitization (`X-User-Id`, `X-Plan-Tier`), SSE streaming proxy, public route whitelisting. |
 | **Auth Service** | `8001` | [`backend/services/auth`](file:///backend/services/auth) | User registration, login, BCrypt password hashing, session metadata tracking, RS256 token issuance & SHA-256 refresh token rotation. |
 | **Channel Service** | `8002` | [`backend/services/channel`](file:///backend/services/channel) | Creator channel identity, manual onboarding profile, target audience geography, niche preferences, content format (Shorts/Long-form), tone of voice. |
-| **Trend & Strategy** | `8003` | [`backend/services/trend`](file:///backend/services/trend) | Multi-source ingest (YouTube + SerpApi), `langdetect` quality gate, 384-dim Qdrant vector indexing, TVS scoring, outlier breakout detection ($\mu + 2\sigma$), AI Strategy Copilot with SSE streaming. |
+| **Trend & Strategy** | `8003` | [`backend/services/trend`](file:///backend/services/trend) | YouTube Data API v3 ingestion, `langdetect` quality gate, 384-dim Qdrant vector indexing, TVS scoring, outlier breakout detection ($\mu + 2\sigma$), AI Strategy Copilot with SSE streaming. |
 | **ML Service** | `8007` | [`backend/services/ml`](file:///backend/services/ml) | 85-feature LightGBM virality forecast engine, 90-day trajectory curves, Bayesian confidence intervals, automated evaluation telemetry (MAE, RMSE, MAPE, R²). |
 | **Frontend Web** | `5173` | [`frontend`](file:///frontend) | React 19, TypeScript, Tailwind CSS 4, Zustand, Vite. Interactive onboarding wizard, personalized trend discovery feed, ML forecast charts, strategy chat, public audit page. |
 
@@ -129,7 +128,7 @@ flowchart TD
 | **Machine Learning** | LightGBM, Scikit-Learn, Pandas, NumPy, Sentence-Transformers (`all-MiniLM-L6-v2`) |
 | **Databases & Cache** | PostgreSQL 16, Redis 7, Qdrant Vector DB (v1.11.0) |
 | **Security & Auth** | Asymmetric RS256 JWT, Cryptography (PEM keys), BCrypt, Zero-Trust Gateway header injection |
-| **Data Ingestion** | YouTube Data API v3 (multi-key pool), SerpApi (Google Trends), `langdetect` |
+| **Data Ingestion** | YouTube Data API v3 (multi-key rotating pool), `langdetect` |
 | **DevOps & Containers** | Docker, Docker Compose, Ansible, Caddy / Nginx reverse proxy |
 
 </div>
@@ -220,7 +219,6 @@ CreatorIQ/
 
    # External Signal APIs (Required for live trend collection)
    YOUTUBE_API_KEY=your_youtube_data_api_v3_key
-   SERPAPI_API_KEY=your_serpapi_key
    OPENROUTER_API_KEY=your_llm_api_key
    MODEL_NAME=openai/gpt-4o-mini
    ```

@@ -44,7 +44,6 @@ flowchart TD
 
     subgraph ExternalPipelines ["External Ingestion & Inference"]
         Trend --> YouTube["YouTube Data API v3 Pool"]
-        Trend --> SerpApi["SerpApi / Google Trends"]
         Trend --> Tavily["Tavily Search API"]
         Trend --> LLM["Groq / Gemini / OpenAI / OpenRouter"]
     end
@@ -74,7 +73,7 @@ flowchart TD
 ### 4. Trend & Strategy Service (`:8003`)
 - **Multi-Source Trend Harvester**:
   - **YouTube Data API v3 Pool**: Multi-key rotating collector pool with daily quota tracking (`api_request_logs`) to maximize ingestion within rate limits.
-  - **Discovery Harvester**: Integrates Google Trends, SerpApi, Tavily, and trending video scrapers.
+  - **Discovery Harvester**: Integrates YouTube trend velocity signals and web topic harvesters.
   - **LLM Concept Deduplication**: Uses high-speed LLMs (Groq, Gemini, OpenRouter) to clean raw search queries into canonical concepts.
 - **TVS (Trend Virality Score) Engine**:
   - Calculates reach ratios, interaction densities, outlier streaks across channel tiers (small, medium, large channels), and lifecycle transitions (`emerging`, `growing`, `peaking`, `declining`).
@@ -247,7 +246,6 @@ Configure the following variables in `backend/.env`:
 | `YOUTUBE_API_KEY` | Primary YouTube Data API v3 key | `AIzaSy...` |
 | `YOUTUBE_API_KEY_2` | Secondary key for rotation pool | `AIzaSy...` |
 | `YOUTUBE_API_KEY_3` | Tertiary key for rotation pool | `AIzaSy...` |
-| `SERPAPI_API_KEY` | SerpApi key for Google Trends discovery | `your-serpapi-key` |
 | `TAVILY_API_KEYS` | Tavily API key for real-time web topic harvesting | `tvly-...` |
 | `GROQ_API_KEYS` | Groq API key(s) for fast LLM inference | `gsk_...` |
 | `GEMINI_API_KEYS` | Google Gemini API key(s) | `AIzaSy...` |
